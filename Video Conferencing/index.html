@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Video Conferencing Website</title>
+  <style>
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    }
+    #video, #audio {
+      /* width: auto;
+      height: 50%; */
+      position: relative;
+      
+      width: 100%;
+      height: 60vh;
+      border: 2px solid black;
+      
+      
+    }
+    #h{
+      text-align: center;
+        text-shadow: 2px 2px 2px rgb(0, 0, 0);
+      /* display: flex;
+      justify-content: space-between; */
+      align-items: center;
+      background-color: #333;
+      color: #fff;
+      padding: 1rem;
+    }
+    footer{
+      text-align: center;
+        text-shadow: 2px 2px 2px rgb(0, 0, 0);
+      /* display: flex;
+      justify-content: space-between; */
+      align-items: center;
+      background-color: #333;
+      color: #fff;
+      padding: 1rem;
+    }
+    #h:hover,footer:hover{
+    color : #ff7300;
+     
+    }
+    .but:hover{
+    /* color: #ff7300; */
+    background-color: rgb(62, 90, 90);
+    }
+     
+    #videoContainer {
+      margin-top: 2px;
+      display: flex;
+      flex-wrap: wrap;
+      
+      
+    }
+
+    #videoContainer video {
+      width: 300px;
+      height: auto;
+      margin-right: 20px;
+      border: 2px solid black;
+      margin-bottom: 20px;
+    }
+
+    #chatContainer {
+      margin-top: 20px;
+      display: none;
+      
+    }
+
+    #chatForm {
+      display: flex;
+      margin-top: 10px;
+      
+    }
+
+    #chatInput {
+      flex-grow: 3;
+      padding: 10px;
+      margin-right: 10px;
+    }
+    
+
+    
+    .but{
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      background-color: #3c4246;
+      color: #fff;
+      cursor: pointer;
+    }
+    
+    #chatMessages {
+      margin-top: 10px;
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .chat-message {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="h"><h1>Video Conferencing Website</h1></div>
+  
+
+  <div id="con">
+    <button id="videoButton" class="but">Pause Video</button>
+    <button id="audioButton" class="but">Mute Audio</button>
+    <button id="chatButton" class="but">Chat</button>
+    <button id="recordButton" class="but">Start Recording</button>
+  </div>
+
+  <div>
+    <video id="video" autoplay></video>
+    <audio id="audio" autoplay></audio>
+  </div>
+
+  <div id="chatContainer">
+    <form id="chatForm">
+      <input type="text" id="chatInput" placeholder="Type a message...">
+      <button type="submit" class="but">Send</button>
+    </form>
+
+    <ul id="chatMessages"></ul>
+  </div>
+
+  <div id="videoContainer"></div>
+  <footer>
+    <p>&copy; MADE BY ASHHAR RAHMAN </p>
+  </footer>
+
+
+  <script>
+    // Select elements
+    const video = document.querySelector('#video');
+    const audio = document.querySelector('#audio');
+    const videoButton = document.querySelector('#videoButton');
+    const audioButton = document.querySelector('#audioButton');
+    const chatButton = document.querySelector('#chatButton');
+    const chatContainer = document.querySelector('#chatContainer');
+    const chatForm = document.querySelector('#chatForm');
+    const chatInput = document.querySelector('#chatInput');
+    const chatMessages = document.querySelector('#chatMessages');
+    const recordButton = document.querySelector('#recordButton');
+    const videoContainer = document.querySelector('#videoContainer');
+
+    // Get the video stream
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then(stream => {
+        // Set the stream to the video and audio elements
+        video.srcObject = stream;
+        audio.srcObject = stream;
+
+        // Toggle the video when the video button is clicked
+        videoButton.addEventListener('click', () => {
+          if (video.paused) {
+            video.play();
+            videoButton.innerText = 'Pause Video';
+          } else {
+            video.pause();
+            videoButton.innerText = 'Play Video';
+          }
+        });
+
+        // Mute/unmute the audio when the audio button is clicked
+        audioButton.addEventListener('click', () => {
+          if (audio.muted) {
+            audio.muted = false;
+            audioButton.innerText = 'Mute Audio';
+          } else {
+            audio.muted = true;
+            audioButton.innerText = 'Unmute Audio';
+          }
+        });
+
+        // Show/hide the chat when the chat
+        chatButton.addEventListener('click', () => {
+        if (chatContainer.style.display === 'none') {
+        chatContainer.style.display = 'block';
+        } else {
+        chatContainer.style.display = 'none';
+        }
+        });
+            // Send a chat message when the chat form is submitted
+        chatForm.addEventListener('submit', event => {
+        event.preventDefault();
+        const message = chatInput.value;
+        chatInput.value = '';
+        const chatMessage = document.createElement('li');
+        chatMessage.classList.add('chat-message');
+        chatMessage.innerText = message;
+        chatMessages.appendChild(chatMessage);
+        });
+
+        // Record the video stream when the record button is clicked
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        recordButton.addEventListener('click', () => {
+        if (mediaRecorder === null) {
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            mediaRecorder.addEventListener('dataavailable', event => {
+            recordedChunks.push(event.data);
+            });
+            mediaRecorder.addEventListener('stop', () => {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const videoElement = document.createElement('video');
+            videoElement.src = url;
+            videoElement.controls = true;
+            videoContainer.appendChild(videoElement);
+            });
+            mediaRecorder.start();
+            recordButton.innerText = 'Stop Recording';
+        } else {
+            mediaRecorder.stop();
+            mediaRecorder = null;
+            recordedChunks = [];
+            recordButton.innerText = 'Start Recording';
+        }
+        });
+    })
+    .catch(error => {
+        console.error(error);
+    });
+  </script>
+ </body>
+</html>
